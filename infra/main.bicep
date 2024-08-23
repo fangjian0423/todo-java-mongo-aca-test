@@ -18,8 +18,7 @@ param applicationInsightsDashboardName string = ''
 param applicationInsightsName string = ''
 param containerAppsEnvironmentName string = ''
 param containerRegistryName string = ''
-param cosmosAccountName string = ''
-param cosmosDatabaseName string = ''
+param psqlDatabaseName string = ''
 param keyVaultName string = ''
 param logAnalyticsName string = ''
 param resourceGroupName string = ''
@@ -27,6 +26,13 @@ param webContainerAppName string = ''
 param apimServiceName string = ''
 param apiAppExists bool = false
 param webAppExists bool = false
+
+@secure()
+@description('PSQL Server administrator password')
+param psqlAdminPassword string = newGuid()
+param psqlName string = ''
+
+var psqlAdminName = 'psqladmin'
 
 @description('Flag to use Azure API Management to mediate the calls between the Web frontend and the backend API')
 param useAPIM bool = false
@@ -114,15 +120,17 @@ module api './app/api.bicep' = {
 }
 
 // The application database
-module cosmos './app/db.bicep' = {
-  name: 'cosmos'
+module psql './app/db.bicep' = {
+  name: 'postgresql'
   scope: rg
   params: {
-    accountName: !empty(cosmosAccountName) ? cosmosAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
-    databaseName: cosmosDatabaseName
+    databaseName: psqlDatabaseName
     location: location
     tags: tags
     keyVaultName: keyVault.outputs.name
+    psqlAdminName: psqlAdminName
+    psqlAdminPassword: psqlAdminPassword
+    name: !empty(psqlName) ? psqlName : '${abbrs.psqlNames}${resourceToken}'
   }
 }
 
@@ -178,10 +186,6 @@ module apimApi './app/apim-api.bicep' = if (useAPIM) {
     apiBackendUrl: api.outputs.SERVICE_API_URI
   }
 }
-
-// Data outputs
-output AZURE_COSMOS_CONNECTION_STRING_KEY string = cosmos.outputs.connectionStringKey
-output AZURE_COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
 
 // App outputs
 output API_CORS_ACA_URL string = corsAcaUrl

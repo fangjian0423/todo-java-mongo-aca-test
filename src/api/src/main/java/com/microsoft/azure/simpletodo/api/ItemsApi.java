@@ -15,14 +15,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Generated;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import jakarta.annotation.Generated;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +70,7 @@ public interface ItemsApi {
         @Parameter(name = "listId", description = "The Todo list unique identifier", required = true) @PathVariable(
             "listId"
         ) String listId,
-        @Parameter(name = "TodoItem", description = "The Todo Item") @Valid @RequestBody(required = false) TodoItem todoItem
+        @Parameter(name = "TodoItem", description = "The Todo Item") @RequestBody(required = false) TodoItem todoItem
     ) {
         getRequest()
             .ifPresent(request -> {
@@ -308,7 +308,7 @@ public interface ItemsApi {
         @Parameter(name = "itemId", description = "The Todo item unique identifier", required = true) @PathVariable(
             "itemId"
         ) String itemId,
-        @Parameter(name = "TodoItem", description = "The Todo Item") @Valid @RequestBody(required = false) TodoItem todoItem
+        @Parameter(name = "TodoItem", description = "The Todo Item") @RequestBody(required = false) TodoItem todoItem
     ) {
         getRequest()
             .ifPresent(request -> {
@@ -357,7 +357,7 @@ public interface ItemsApi {
         @Parameter(
             name = "request_body",
             description = "unique identifiers of the Todo items to update"
-        ) @Valid @RequestBody(required = false) List<String> requestBody
+        ) @RequestBody(required = false) List<String> requestBody
     ) {
         return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
     }

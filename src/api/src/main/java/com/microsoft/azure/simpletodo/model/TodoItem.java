@@ -2,11 +2,15 @@ package com.microsoft.azure.simpletodo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.OffsetDateTime;
-import java.util.Objects;
 import jakarta.annotation.Generated;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
+import java.util.Objects;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
@@ -15,9 +19,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 @Schema(name = "TodoItem", description = "A task that needs to be completed")
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen")
+@Entity
 public class TodoItem {
 
     @JsonProperty("id")
+    @GeneratedValue(generator = "system-uuid")
+    @GenericGenerator(name = "system-uuid", strategy = "uuid")
+    @Id
     private String id;
 
     @JsonProperty("listId")
@@ -58,7 +66,6 @@ public class TodoItem {
      * Get listId
      * @return listId
      */
-    @NotNull
     @Schema(name = "listId", required = true)
     public String getListId() {
         return listId;
@@ -86,8 +93,7 @@ public class TodoItem {
      * Get description
      * @return description
      */
-    @NotNull
-    @Schema(name = "description", required = true)
+    @Schema(name = "description", required = false)
     public String getDescription() {
         return description;
     }
@@ -146,10 +152,16 @@ public class TodoItem {
         if (!((Object) this instanceof TodoItem)) return false;
         final Object this$id = this.getId();
         final Object other$id = other.getId();
-        if (this$id == null ? other$id != null : !this$id.equals(other$id)) return false;
+        if (
+            this$id == null ? other$id != null : !this$id.equals(other$id)
+        ) return false;
         final Object this$listId = this.getListId();
         final Object other$listId = other.getListId();
-        if (this$listId == null ? other$listId != null : !this$listId.equals(other$listId)) return false;
+        if (
+            this$listId == null
+                ? other$listId != null
+                : !this$listId.equals(other$listId)
+        ) return false;
         return true;
     }
 
@@ -160,20 +172,20 @@ public class TodoItem {
     public String toString() {
         return (
             "TodoItem(id=" +
-            this.getId() +
-            ", listId=" +
-            this.getListId() +
-            ", name=" +
-            this.getName() +
-            ", description=" +
-            this.getDescription() +
-            ", state=" +
-            this.getState() +
-            ", dueDate=" +
-            this.getDueDate() +
-            ", completedDate=" +
-            this.getCompletedDate() +
-            ")"
+                this.getId() +
+                ", listId=" +
+                this.getListId() +
+                ", name=" +
+                this.getName() +
+                ", description=" +
+                this.getDescription() +
+                ", state=" +
+                this.getState() +
+                ", dueDate=" +
+                this.getDueDate() +
+                ", completedDate=" +
+                this.getCompletedDate() +
+                ")"
         );
     }
 }

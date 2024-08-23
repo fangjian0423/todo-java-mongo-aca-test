@@ -53,6 +53,7 @@
     "insightsActionGroups": "ag-",
     "insightsComponents": "appi-",
     "keyVaultVaults": "kv-",
+    "psqlNames": "psql-",
     "kubernetesConnectedClusters": "arck",
     "kustoClusters": "dec",
     "kustoClustersDatabases": "dedb",

@@ -15,9 +15,9 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -50,38 +50,39 @@ public class TodoItemsController implements ItemsApi {
     }
 
     public ResponseEntity<Void> deleteItemById(String listId, String itemId) {
-        return todoItemRepository
-            .findTodoItemByListIdAndId(listId, itemId)
-            .map(i -> todoItemRepository.deleteTodoItemByListIdAndId(i.getListId(), i.getId()))
-            .map(i -> ResponseEntity.noContent().<Void>build())
-            .orElse(ResponseEntity.notFound().build());
+        Optional<TodoItem> todoItem = getTodoItem(listId, itemId);
+        if (todoItem.isPresent()) {
+            todoItemRepository.deleteById(itemId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     public ResponseEntity<TodoItem> getItemById(String listId, String itemId) {
-        return todoItemRepository
-            .findTodoItemByListIdAndId(listId, itemId)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        return getTodoItem(listId, itemId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     public ResponseEntity<List<TodoItem>> getItemsByListId(String listId, BigDecimal top, BigDecimal skip) {
         // no need to check nullity of top and skip, because they have default values.
-        return todoListRepository
-            .findById(listId)
-            .map(l -> todoItemRepository.findTodoItemsByTodoList(l.getId(), skip.intValue(), top.intValue()))
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        Optional<TodoList> todoList = todoListRepository.findById(listId);
+        if (todoList.isPresent()) {
+            return ResponseEntity.ok(
+                todoItemRepository.findByListId(listId, PageRequest.of(skip.intValue(), top.intValue()))
+            );
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     public ResponseEntity<TodoItem> updateItemById(String listId, String itemId, TodoItem todoItem) {
         // make sure listId and itemId are set into the todoItem, otherwise it will create
         // a new todo item.
-        todoItem.setId(itemId);
-        todoItem.setListId(listId);
-        return todoItemRepository
-            .findTodoItemByListIdAndId(listId, itemId)
-            .map(t -> todoItemRepository.save(todoItem))
-            .map(ResponseEntity::ok) // return the saved item.
+        return getTodoItem(listId, itemId)
+            .map(t -> {
+                todoItemRepository.save(todoItem);
+                return ResponseEntity.ok(todoItem);
+            })
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -92,29 +93,35 @@ public class TodoItemsController implements ItemsApi {
         BigDecimal skip
     ) {
         // no need to check nullity of top and skip, because they have default values.
-        return todoListRepository
-            .findById(listId)
-            .map(l ->
-                todoItemRepository.findTodoItemsByTodoListAndState(l.getId(), state.name(), skip.intValue(), top.intValue())
-            )
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(
+            todoItemRepository.findByListIdAndState(listId, state.name(), PageRequest.of(skip.intValue(), top.intValue()))
+        );
     }
 
     public ResponseEntity<Void> updateItemsStateByListId(String listId, TodoState state, List<String> itemIds) {
         // update all items in list with the given state if `itemIds` is not specified.
-        final List<TodoItem> items = Optional
-            .ofNullable(itemIds)
-            .filter(ids -> !CollectionUtils.isEmpty(ids))
-            .map(ids ->
-                StreamSupport
-                    .stream(todoItemRepository.findAllById(ids).spliterator(), false)
-                    .filter(i -> listId.equalsIgnoreCase(i.getListId()))
-                    .toList()
-            )
-            .orElseGet(() -> todoItemRepository.findTodoItemsByListId(listId));
-        items.forEach(item -> item.setState(state));
-        todoItemRepository.saveAll(items); // save items in batch.
-        return ResponseEntity.noContent().build();
+        for (TodoItem todoItem : todoItemRepository.findByListId(listId)) {
+            todoItem.setState(state);
+            todoItemRepository.save(todoItem);
+        }
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    private Optional<TodoItem> getTodoItem(String listId, String itemId) {
+        Optional<TodoList> optionalTodoList = todoListRepository.findById(listId);
+        if (optionalTodoList.isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<TodoItem> optionalTodoItem = todoItemRepository.findById(itemId);
+        if (optionalTodoItem.isPresent()) {
+            TodoItem todoItem = optionalTodoItem.get();
+            if (todoItem.getListId().equals(listId)) {
+                return Optional.of(todoItem);
+            } else {
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        }
     }
 }

@@ -9,7 +9,7 @@ param keyVaultName string
 @allowed([ 'GlobalDocumentDB', 'MongoDB', 'Parse' ])
 param kind string
 
-resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: name
   kind: kind
   location: location
@@ -27,7 +27,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
     enableAutomaticFailover: false
     enableMultipleWriteLocations: false
     apiProperties: (kind == 'MongoDB') ? { serverVersion: '4.2' } : {}
-    capabilities: [ { name: 'EnableServerless' } ]
+    capabilities: [ { name: 'EnableServerless' }, { name: 'EnableMongo' } ]
     minimalTlsVersion: 'Tls12'
   }
 }

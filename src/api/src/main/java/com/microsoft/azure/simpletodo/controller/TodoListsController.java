@@ -3,10 +3,13 @@ package com.microsoft.azure.simpletodo.controller;
 import com.microsoft.azure.simpletodo.api.ListsApi;
 import com.microsoft.azure.simpletodo.model.TodoList;
 import com.microsoft.azure.simpletodo.repository.TodoListRepository;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
-import jakarta.validation.constraints.NotNull;
+import java.util.Optional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -31,11 +34,13 @@ public class TodoListsController implements ListsApi {
     }
 
     public ResponseEntity<Void> deleteListById(String listId) {
-        return todoListRepository
-            .findById(listId)
-            .map(l -> todoListRepository.deleteTodoListById(l.getId()))
-            .map(l -> ResponseEntity.noContent().<Void>build())
-            .orElseGet(() -> ResponseEntity.notFound().build());
+        Optional<TodoList> todoList = todoListRepository.findById(listId);
+        if (todoList.isPresent()) {
+            todoListRepository.deleteById(listId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     public ResponseEntity<TodoList> getListById(String listId) {
@@ -47,10 +52,10 @@ public class TodoListsController implements ListsApi {
 
     public ResponseEntity<List<TodoList>> getLists(BigDecimal top, BigDecimal skip) {
         // no need to check nullity of top and skip, because they have default values.
-        return ResponseEntity.ok(todoListRepository.findAll(skip.intValue(), top.intValue()));
+        return ResponseEntity.ok(todoListRepository.findAll(PageRequest.of(skip.intValue(), top.intValue())).getContent());
     }
 
-    public ResponseEntity<TodoList> updateListById(String listId, @NotNull TodoList todoList) {
+    public ResponseEntity<TodoList> updateListById(String listId, @Valid TodoList todoList) {
         // make sure listId is set into the todoItem, otherwise it will create a new todo
         // list.
         todoList.setId(listId);

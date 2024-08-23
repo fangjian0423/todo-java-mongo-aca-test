@@ -1,21 +1,7 @@
-param accountName string
 param location string = resourceGroup().location
 param tags object = {}
 
-param collections array = [
-  {
-    name: 'TodoList'
-    id: 'TodoList'
-    shardKey: 'Hash'
-    indexKey: '_id'
-  }
-  {
-    name: 'TodoItem'
-    id: 'TodoItem'
-    shardKey: 'Hash'
-    indexKey: '_id'
-  }
-]
+
 param databaseName string = ''
 param keyVaultName string
 
@@ -23,18 +9,67 @@ param keyVaultName string
 var defaultDatabaseName = 'Todo'
 var actualDatabaseName = !empty(databaseName) ? databaseName : defaultDatabaseName
 
-module cosmos '../core/database/cosmos/mongo/cosmos-mongo-db.bicep' = {
-  name: 'cosmos-mongo'
+param name string
+
+param psqlAdminName string
+@secure()
+param psqlAdminPassword string
+
+param dbUrlKey string = 'SPRING-DATASOURCE-URL'
+param dbUserKey string = 'SPRING-DATASOURCE-USERNAME'
+param dbPasswordKey string = 'SPRING-DATASOURCE-PASSWORD'
+
+
+module psql '../core/database/postgresql/flexibleserver.bicep' = {
+  name: 'flexible-postgresql'
   params: {
-    accountName: accountName
-    databaseName: actualDatabaseName
+    name: name
+    sku: {
+      name: 'Standard_D4s_v3'
+  	  tier: 'GeneralPurpose'
+    }
+    version: '14'
+    administratorLogin: psqlAdminName
+    administratorLoginPassword: psqlAdminPassword
+    storage: {
+      storageSizeGB: 32
+    }
+    databaseNames: [ actualDatabaseName ]
     location: location
-    collections: collections
-    keyVaultName: keyVaultName
     tags: tags
+    allowAzureIPsFirewall: true
+    allowAllIPsFirewall: true
   }
 }
 
-output connectionStringKey string = cosmos.outputs.connectionStringKey
-output databaseName string = cosmos.outputs.databaseName
-output endpoint string = cosmos.outputs.endpoint
+resource psqlConnectionString 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  parent: keyVault
+  name: dbUrlKey
+  properties: {
+    value: 'jdbc:postgresql://${name}.postgres.database.azure.com:5432/${actualDatabaseName}'
+  }
+}
+
+resource psqlUser 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  parent: keyVault
+  name: dbUserKey
+  properties: {
+    value: psqlAdminName
+  }
+}
+
+resource psqlPassword 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  parent: keyVault
+  name: dbPasswordKey
+  properties: {
+    value: psqlAdminPassword
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+  name: keyVaultName
+}
+
+
+
+output psql_domain_name string = psql.outputs.POSTGRES_DOMAIN_NAME
