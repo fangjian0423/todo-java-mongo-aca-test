@@ -3,8 +3,12 @@ package com.microsoft.azure.simpletodo.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Generated;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * A list of related Todo items
@@ -12,9 +16,13 @@ import java.util.Objects;
 
 @Schema(name = "TodoList", description = " A list of related Todo items")
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen")
+@Entity
 public class TodoList {
 
     @JsonProperty("id")
+    @GeneratedValue(generator = "system-uuid")
+    @GenericGenerator(name = "system-uuid", strategy = "uuid")
+    @Id
     private String id;
 
     @JsonProperty("name")
