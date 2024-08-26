@@ -46,6 +46,9 @@ public class WebConfiguration implements WebMvcConfigurer {
                 origins.add("https://portal.azure.com");
                 origins.add("https://ms.portal.azure.com");
 
+                // for local test
+                origins.add("http://localhost:3000");
+
                 if (allowOrigins != null) {
                     String[] localhostOrigin = allowOrigins.split(",");
                     String fileName = Thread.currentThread().getStackTrace()[1].getFileName();

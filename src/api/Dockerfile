@@ -19,4 +19,4 @@ COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
 COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
 
-ENTRYPOINT ["java","-noverify", "-XX:MaxRAMPercentage=70", "-XX:+UseParallelGC", "-XX:ActiveProcessorCount=2", "-cp","app:app/lib/*","com.microsoft.azure.simpletodo.SimpleTodoApplication"]
+ENTRYPOINT ["java","-noverify", "-XX:MaxRAMPercentage=70", "-XX:+UseParallelGC", "-XX:ActiveProcessorCount=2", "-Dspring.profiles.active=cloud", "-cp","app:app/lib/*","com.microsoft.azure.simpletodo.SimpleTodoApplication"]
